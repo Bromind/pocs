@@ -1,0 +1,122 @@
+\documentclass[twocolumn]{article}
+\usepackage{titling}
+\usepackage{color}
+\usepackage{tikz}
+\usepackage{drawstack}
+
+\usetikzlibrary{graphs, automata, quotes}
+
+
+
+\title{One-pager 1}
+\author{Martin \textsc{Vassor}}
+
+\predate{}
+\postdate{}
+\date{}
+
+\setlength{\droptitle}{-90pt}
+
+\begin{document}
+\maketitle
+\section{Improving connectivity at the network layer}
+\subsection{\textsc{Ron} goals}
+\textsc{Ron} claims three goals: (i) improving failure detection and recovery; (ii) tighter integration of routing and path selection with the application; (iii) expressive policy routing \cite{andersen_resilient_2001}. The points (ii) and (iii) break layer separation and aiming for those is probably a fallacy, and should be dealt with in upper layers. Hence, we only consider the point (i) to be put in the Network layer. Thus, the goal is to provide fast error detection and recovery at the network layer.
+
+\subsection{\textsc{Ron} and network layer}
+To understand which ideas can be shared or not, let first synthesize the main differences between \textsc{ron} and the network layer. First, \textsc{ron} is a scattered network, it contains only a few nodes, while the Internet contains much more nodes. This allow \textsc{ron} routers to consider a more general view of the network topology. Second, \textsc{ron} routing algorithm has more control on the whole path, when network layer routing algorithm only control the next node. 
+
+With the multi-hop strategy, the challenge is to know of some distant router without knowing global properties of the network.
+
+\subsection{Multi-hop at Network layer}
+\paragraph{Multiple IP header encapsulation}
+The idea to allow multi-hop at Network level is to encapsulate multiple time the Transport layer segment. This requires to change the IP header, to include a counter which indicates the number of IP headers (see Figure~\ref{fig:multi_ip_header_stack}). When the packet reach its first header destination, the header is popped and the rest of the packet is either forwarded (if the counter is not $0$) or passed to the Transport layer (otherwise). This allow the first router to have some control over intermediate \emph{way points}\footnote{We call \emph{way point} a known distant router}.
+\begin{figure}
+	\centering
+	\begin{drawstack}
+		\cell{IP Header ($c = n$)}
+		\padding{1}{IP Headers}
+		\cell{IP Header ($c = 0$)}
+		\cell{Transport Header}
+	\end{drawstack}
+	\caption{Multi IP header stack}
+	\label{fig:multi_ip_header_stack}
+\end{figure}
+
+\paragraph{\emph{Way points} discovery} 
+The next challenge is to discover distant routers. The source router can extract information from the headers of packets it has previously forwarded. With those informations it can build a table of existing potential \emph{way points}\footnote{Not all have to be in the table (it is impossible, since each router is a potential \emph{way point}).}. When the source router gets a segment from the Transport layer, it chooses $n$ \emph{way points} in its table.
+
+\paragraph{\emph{Way points} routing}
+The last point to manage is the way to choose each router to select as \emph{way point}. Two parameters can be easily scanned: inserting a \emph{way point time stamp} in the ($i$-th) IP header can give an indication of the $i\rightarrow i+1$ latency to the $i+1$ router. Also, the bandwidth from a router can be estimated from the number of messages one router receive from it. Scanning the passing-by traffic should be quite efficient: if a router crashes, no packet should contains its address after the maximum time-to-live, and should quickly be erased from the tables.
+
+Some details have been ignored (probabilistic choice, damping, etc.). Those details must be essential to guarantee some properties (connected component, connectivity, etc.). {\color{gray} (word count: 500, including footnotes, titles, caption, excluding references)}
+
+\section{Multi-path in \emph{Service Access Layer}}
+\subsection{Layer choice}
+\textsc{Serval} proposes a new architecture which separate \emph{location} and \emph{identity} to allow mobility of processes. \textsc{Nordstr\"om} \emph{et al.} claim in \cite{nordstrom_serval_2012} that it is possible to implement a routing protocol which uses simultaneously multiples paths to improve the quality of the transfer\footnote{latency, bandwidth, reliability, etc. The exact definition of quality is not relevant here.}. The new layer they introduce (the Service Access Layer) serves the purpose of translating from an \emph{identity} to a \emph{location} (see Figure~\ref{fig:Serval_stack}), and to provide this location to the underlying network layer, which is left unchanged.
+
+\begin{figure}[h]
+	\begin{drawstack}
+		\startframe
+		\cell{CNN website} 
+		\finishframe{Application (what)}
+
+		\startframe
+		\padding{1}{Unused}
+		\finishframe{Transport}
+
+		\startframe
+		\cell{CNN} 
+		\finishframe{Service Access (who)}
+
+		\startframe
+		\cell{CNN location} 
+		\finishframe{Network (where)}
+	\end{drawstack}
+	\caption{The new stack proposed by \textsc{Serval}}
+	\label{fig:Serval_stack}
+\end{figure}
+
+As explained in \cite{zimmermann_osi_1980}, ``network-oriented protocols such as routing [\ldots] will be grouped in this layer.''. This statement shows that the multi-path routing should not be implemented in the Service Access Layer, as another layer already manage this point. Ignoring historical reasons, a fresh implementation should provide this feature in the Network Layer.
+
+The choice made by \textsc{Nordstr\"om} \emph{et al.} is probably due to the practical impossibility to change the Network Layer nowadays.
+
+\subsection{Implementation challenges}
+\paragraph{Possible improvements and goals}
+One can claim that using multi-paths to allow parallel message transmission can improve the bandwidth, by potentially adding parallel path to the bottleneck point, and then increasing the bandwidth (theoretically) up to the max-flow of the topology graph. However, the minimum latency being the minimum latency over all possible path, it should not be improved by using parallel path.
+\paragraph{(Multi-)routing algorithm and path overloading}
+To reach the max-flow of the graph, the routing algorithm must be completely redesign. The current \emph{vector distance} algorithm works only for single paths. The main advantage of this algorithm is that it can be distributed over the routers.
+
+Designing a routing algorithm for multi-path is much more complicated, as if an edge is shared by two paths, its capacity should not be counted twice, hence one can not simply adapt the current algorithm to return the $n$ better paths. Moreover, the multi-routing algorithm should have a global knowledge of the topology graph and the currently studied paths. Thus, providing a distributed implementation\footnote{aiming to a situation where every router have a local routing algorithm as with \emph{distance vector} nowadays.} is more expensive, as all those informations have to be carried along each router. For instance, in Figure~\ref{fig:graph}, the best path (of quality $9$) has to be excluded from the best $2$-path (of quality $10$), but a local computation (say in R$3$) would return a best path of $9$. 
+
+\begin{figure}[h]
+\begin{tikzpicture}[auto,node distance=1.5cm]
+	\tikzstyle{every state}=[circle, draw=black]
+	\node[state] (a) {A};
+	\node[state] (r1) [right of=a] {R1};
+	\node[state] (r2) [above right of=r1] {R2};
+	\node[state] (r3) [below right of=r1] {R3};
+	\node[state] (r4) [right of=r2] {R4};
+	\node[state] (r5) [right of=r3] {R5};
+	\node[state] (r6) [below right of=r4] {R6};
+	\node[state] (B) [right of=r6] {B};
+	\path (a) edge[green, "10"] (r1);
+	\path (r1) edge[orange, "5"] (r2);
+	\path (r2) edge[orange, "5"] (r4);
+	\path (r4) edge[green, "9"] (r6);
+	\path (r5) edge[orange, "5"] (r6);
+	\path (r1) edge[green, "9"] (r3);
+	\path (r3) edge[orange, "5"] (r5);
+	\path (r3) edge[green, "9"] (r4);
+	\path (r6) edge[green, "10"] (B);
+\end{tikzpicture}
+\caption{Example of graph with the best path is not in the best $2$-path}
+\label{fig:graph}
+\end{figure}
+
+\paragraph{Other challenges}
+Finding a scalable multi-routing seems to be the main issue of multi-routing. An implementation would leads to other problems such as more reordering as the latency can vary from one path to the other. Nevertheless, TCP is designed to handle these problem, hence adjusting parameters (window size computation, etc.) should work to solve these details. {\color{gray} (word count: 500, including footnotes, titles, caption, excluding references)}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+\end{document}
