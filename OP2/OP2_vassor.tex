@@ -1,0 +1,64 @@
+\documentclass[twocolumn]{article}
+\usepackage{titling}
+\usepackage{color}
+\usepackage{tikz}
+\usepackage{drawstack}
+\usepackage{todonotes}
+\usepackage{amsthm}
+
+\usetikzlibrary{graphs, automata, quotes}
+
+\newtheorem{principle}{Principle}
+\newtheorem{corollary}{Corollary}
+\newtheorem{claim}{Claim}
+
+\title{One-pager 2}
+\author{Martin \textsc{Vassor}}
+
+\predate{}
+\postdate{}
+\date{}
+
+\setlength{\droptitle}{-90pt}
+
+\begin{document}
+\maketitle
+\section{TCP/IP and the end-to-end argument}
+In order to argue on the potential violation of the \emph{end-to-end principle}, one need to precisely define it first.  
+\begin{principle}[End-to-end]
+	Given a property $P$ defined with respect to a set of properties $\mathcal{P}$, to correctly implement $P$ at layer $L_n$, the layer $L_{n-1}$ must provide $\mathcal{P}$.
+\end{principle}
+\begin{corollary}
+Any try to provide $P$ at a lower level than $L_n$ is incorrect and unnecessary.
+\end{corollary}
+In my opinion, providing $P$ (or a partial/weaker version) in a lower layer does not violate the \emph{end-to-end principle}, as the layering principle defines only a minimal requirement on the abstractions, to allow substitution of layers. However, one can define such a point of view in a \emph{strict end-to-end principle}:
+\begin{principle}[Strict end-to-end]
+	End-to-end principle + each layer implements only the requirements of the above layer.
+\end{principle}
+
+\textsc{Tcp} is designed to provide an ordered, reliable link over an unreliable link, which is not the case of the specification of \textsc{ip}. Hence, providing partial reliability (even for efficiency) in the \emph{network layer} is redundant, and violate the \emph{strict end-to-end principle}, but not the \emph{general end-to-end principle}.
+
+\section{NAT and the end-to-end argument}
+\textsc{Nat}s are used to use a single \textsc{ip} address for many endpoints. Naively, it can be defined as a function $NAT: IP\times ports \mapsto IP\times ports$, implemented in the \emph{layer}.
+
+But the concept of \emph{address} is only an inner view of the \emph{network layer}. From a point of view of an \emph{endpoint}, both configurations are \emph{indistinguishable}. Hence, in my opinion, \textsc{nat} violate \emph{layering separation}, but not \emph{end-to-end argument}\footnote{The argument involved is the same as the one to explain why in-network caches violate \emph{layering separation} but not \emph{end-to-end principle}.}. More generally: 
+\begin{claim}
+	Given a configuration $C_1$ which respects the \emph{end-to-end principle}, if a configuration $C_2$ is \emph{indistinguishable} from an endpoint point of view, then $C_2$ respects the \emph{end-to-end principle}.
+\end{claim}
+
+\section{Centralization versus Decentralization in control planes}
+One can claim that distribution is more complex, requires more guarantees from the nodes\footnote{Typically requires a distributed agreement, which is a strong hypothesis.} but leads to a more scalable and more reliable solution than a centralized implementation\footnote{A centralized protocol is more prone to single point of failure, etc.}. Nevertheless, those are points which are valid for the \emph{centralized versus distributed} debate in general, and not specific for the control plane.
+
+About the control plane, centralization allows a complete control on the routing algorithm. Also, as soon as the server is correct, verifying the correct behaviour of each individual router and endpoint on the network is easier.
+
+But, in my opinion, decentralization provides better guarantees. In large scale systems such as the Internet, one should aim at reliability, and in particular partitioning.
+
+Finally, a non technical argument in favour of distribution is the elegance of the algorithm: relying on the emergence of a global behaviour while each node of the network mesh only do local computations and communications.
+
+\vfill
+{\color{gray} \noindent Word count: 187 + 129 + 177 = 493, including footnotes, titles, caption, excluding references}
+
+\end{document}
+
+
+% \color{gray} (word count: 500, including footnotes, titles, caption, excluding references)
