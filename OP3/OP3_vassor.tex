@@ -1,0 +1,86 @@
+\documentclass[twocolumn]{article}
+\usepackage{titling}
+\usepackage{amsmath}
+\usepackage{tikz}
+
+
+
+
+\title{One-pager 3}
+\author{Martin \textsc{Vassor}}
+
+\predate{}
+\postdate{}
+\date{}
+
+\setlength{\droptitle}{-90pt}
+
+\begin{document}
+\maketitle
+\section{Memory design}
+\textsc{Nvm} seems suitable for long-lasting large-size read-only data, while \textsc{dram} seems suitable for heavily modified short-lifetime data. 
+
+The idea proposed is to use \textsc{nvm} as \emph{read oriented} main memory and as an intermediate paging level (Figure~\ref{fig:mem_org}). Since the \textsc{nvm} is $20\times$ denser, splitting the original main memory capacity $C$ into $C_{\textsc{nvm}}$ and $C_{\textsc{dram}}$ with $C = C_{\textsc{nvm}} + C_{\textsc{dram}}$ provides a swap extension of $19\cdot C_{\textsc{nvm}}$. \textsc{nvm} as swap is suitable in term of both energy (Subsection~\ref{subsec:energy}) and latency (e.g. nanosecond versus millisecond).
+
+The proportion of \textsc{nvm} and \textsc{dram} are chosen according to the relative sizes of the \emph{read-oriented} and \emph{write-oriented} working sets, which are determined according to the following subsections.
+\begin{figure}[b]
+\centering
+\begin{tikzpicture}
+	\draw[fill=red!10] (3, 2) rectangle (6,3) node [pos=.5] {Write memory};
+	\draw[fill=blue!10] (0, 2) rectangle (3, 3) node [pos=.5] {Read memory};
+	\draw[fill=blue!10] (0, 1) rectangle (6, 2) node [pos=.5] {\textsc{nvm} as swap};
+	\draw[fill=black!10] (0,0) rectangle (6, 1) node [pos=.5] {swap};
+
+	\draw[fill=blue!10, draw=none] (6.5,0) rectangle (7.75, 1) node [pos=.5] {\textsc{nvm}};
+	\draw[fill=red!10, draw=none] (6.5,2) rectangle (7.75, 3) node [pos=.5] {\textsc{dram}};
+\end{tikzpicture}
+\caption{Memory organisation}
+\label{fig:mem_org}
+\end{figure}
+
+\subsection{Energy}
+\label{subsec:energy}
+Let $K_k$, $K_r$ and $K_w$ be the energy cost of keeping a unit of data for a unit of time, reading and writing a unit of data in \textsc{dram}. Let $N_r$, $N_w$ and $N_l$ be the number of reads, writes and loads from disk. Let $||d||$ be the size of the data, $t$ its lifetime.
+The overall energy cost in \textsc{dram} and \textsc{nvm} are 
+$$E_{\textsc{dram}} = ||d|| \cdot (t\cdot K_k + N_r\cdot K_r + (N_w + N_l)\cdot K_w)$$
+$$E_{\textsc{nvm}} = ||d||\cdot (N_r\cdot K_r +(N_w + N_l)\cdot K_w\cdot 50) \qquad .$$
+
+Hence,
+\begin{align*}
+	&E_{\textsc{nvm}} < E_{\textsc{dram}} \\
+	\Leftrightarrow &(N_w + N_l)\cdot K_w\cdot 50 < t\cdot K_k  + (N_w+N_l)\cdot K_w \\
+	\Leftrightarrow& 50 < \frac{t\cdot K_k}{(N_w + N_l)\cdot K_w} + 1
+\end{align*}
+
+Hence, \textsc{nvm} is energy efficient for long-lasting (swap extension) or \emph{read-oriented} data.
+
+\subsection{Latency}
+With $N_r$, $N_w$ and $N_l$ as above, $L_w$ and $L_r$ the latencies of a single write and read in \textsc{dram}.
+The \textsc{dram} and \textsc{nvm} overall latencies are $$L_{\textsc{dram}} = N_r\cdot L_r + (N_w+ N_l)\cdot L_w$$ 
+$$L_{\textsc{nvm}} = N_r\cdot L_r + (N_w + N_l)\cdot L_w\cdot 12\qquad .$$
+
+Hence, if \textsc{nvm} is used by read-oriented data, it does not suffer from the writing latency penalty. The loading latency is certainly worse than \textsc{dram}, but the disk latency bottlenecks in both cases.
+
+\section{Software design}
+In virtual memory, the software is responsible of handling page placement between two locations. Our goal here is to spread the data between three locations, as the memory is now divided into two parts.
+
+\subsection{Semantic separation}
+Usual programs are divided into segments. When loading a program, the operating system can safely place read-only data (such as the \texttt{.text}, the \texttt{.data} segments) in \textsc{nvm} memory and read-write data (such as the \texttt{.bss} segment, the \texttt{stack}, etc.) in \textsc{dram} memory.
+
+Similarly, dynamically allocated memory can be placed depending on the right accesses. If some data is \texttt{mprotect} with write access, the memory page should be put in \textsc{dram} and vice-versa.
+
+This separation is \emph{semantic} as it is based on the expected behaviour of the data based on some \emph{hints}.
+
+\subsection{Dynamic moves}
+As there is currently a dirty bit in the \textsc{mmu} to measure accesses, one can imagine to split it into two counters, namely a \emph{read access counter} and a \emph{write access counter}. Hence, it would be easy to adapt the current page-placement algorithm to dynamically guess the best place for each page, and eventually move them during the execution.
+
+
+\section{Conclusion}
+Replacing some \textsc{dram} by \textsc{nvm} serves two purposes:
+\begin{enumerate}
+	\item Reducing the cost of read-oriented data, handled by semantic hints.
+	\item Providing an intermediate level for virtual memory, due to \textsc{nvm} superior capacity, handled by extended \textsc{mmu}.
+\end{enumerate}
+
+{\color{gray} \noindent Word count: 269 + 193 + 38 = 500, including footnotes, titles, caption, 1 word per equation, excluding references}
+\end{document}
