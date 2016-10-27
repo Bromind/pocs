@@ -1,0 +1,14 @@
+Feedback by Pr. Argyraki:
+
+
+Q1
+- Very nice goal separation.
+- Interesting proposal - to create a RON-like overlay within the network layer - but needed more detail to understand it. Does each router maintain a list of waypoints and monitor the status of the path between itself and all these waypoints? Does it choose the waypoints randomly (among the ones it has seen in the past)? How do you bootstrap waypoint discovery?
+
+Q2
+- You take a clear position - that multi path should be done at the network layer.
+- It would have been great to see a clear argument on why the network layer is the right one. You cite a paper that takes this approach; it would have been great to also summarize their reasoning for why they took this approach.
+- The challenge you discuss is how to provide multi-path, congestion-sensitive routing. This is indeed a hard challenge - harder than providing multi-path.
+- An important problem with implementing multi-path at the network layer is that it breaks TCP congestion control. Imagine what happens when the network stripes a TCP connection across multiple paths, some of them lossy, some of them not. TCP assumes a single communication channel, so it would interpret packet loss as a signal of congestion and slow down the entire connection. Basically, TCP cannot do congestion control correctly unless it knows about the underlying network paths, and it cannot know about them if multi-path is only provided by the network layer.
+- The truth is that multi-path is a really complex issue. We have to do it either above or at the transport layer, such that TCP is aware of the multiple network paths. At the same time, if we want our multiple paths to be disjoint or non-congested, we also have to involve the network layer (as you discuss).
+
