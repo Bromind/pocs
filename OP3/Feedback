@@ -1,0 +1,11 @@
+Feedback by Pr. Bugnion: 
+
+Grade: 6.0
+
+
+The writing is very good.   The mathematical formal treatment of Q1 was not necessary; the intuition is what I was looking for.  Luckily you provide the correct intuition.    S1.2 makes the assumption that write latencies are immediately visible to the program; this is actually never the case because caches use "write buffers" to asynchronously copy the data back to the lower level of the hierarchy (including memory).  Hence, the additional latency penalty for writes is a non-issue.  But in your design, this rarely happens anyway, so this is not the problem.
+
+The design is good and your description of it is clear.
+
+Q2 is strong; well written and organized.   You could have formalized the replacement policies a bit more # (the aim is to approximate a "least recently written" policy for evictions from DRAM back to NVM/swap).
+
