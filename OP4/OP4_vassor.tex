@@ -1,0 +1,76 @@
+\documentclass[twocolumn]{article}
+\usepackage{titling}
+\usepackage{color}
+\usepackage{amsthm}
+\usepackage[]{algorithm2e}
+\usepackage{tikz}
+
+%\usetikzlibrary{graphs, automata, quotes}
+
+\SetKw{Read}{read}
+\SetKw{Write}{write}
+\SetKw{Acquire}{become\_unique\_writer}
+\SetKw{Release}{release\_write}
+\SetKwProg{Fn}{Transaction}{}{}
+
+\newtheorem{claim}{Claim}
+
+\title{One-pager 4}
+\author{Martin \textsc{Vassor}}
+
+\predate{}
+\postdate{}
+\date{}
+
+\setlength{\droptitle}{-90pt}
+
+\begin{document}
+\maketitle
+\section{Introduction}
+This introduction explains assumptions and the outline.
+
+\textsc{Tsx} consists of two parts: an optimistic transaction, without locking and which is aborted in case of conflicts, and a fall-back transaction, with locking to serialize accesses. 
+
+In \textsc{crew} concurrency model, each object has at most one \emph{writer} at any time. This privilege granting is done statically or dynamically (\texttt{compare-and-swap} to initially increment the version number --if it is even--, ensuring the uniqueness of writer). 
+
+A \textsc{crew} transaction has two parts: first optimistic reads and actual computation, then the critical section: acquiring write privileges, verifying \emph{readSet} is unmodified, and writing back.
+
+Section~\ref{sec:opt} and~\ref{sec:fallback} study the usefulness of \textsc{crew} in the optimistic (resp. fall-back) part of \textsc{tsx}. Section~\ref{sec:relax} suggests applications for weaker property requirements.
+
+Other cases are not studied, as different merging strategies can be reduced to the studied cases.
+
+\section{\textsc{Crew} in optimistic \textsc{TSX}}
+\label{sec:opt}
+This section shows that \textsc{tsx} is more conservative than \textsc{crew}.
+\begin{claim}
+	\label{claim_1}
+	If a transaction $T$ in \textsc{crew} aborts, then $T$ in \textsc{tsx} aborts.
+\end{claim}
+
+\begin{proof}
+	If the \textsc{crew} aborts, an object in the \emph{readSet} has been publicly modified. Then, its cache line is invalidated, which aborts the optimistic part.
+\end{proof}
+
+Thus, having a \textsc{crew} transaction inside an optimistic section of \textsc{tsx} is not useful as \textsc{tsx} will catch all conflicts. By extension, any overlapping an optimistic \textsc{tsx} section with a \textsc{crew} transaction is not useful: either the \textsc{tsx} part covers all the critical part (claim~\ref{claim_1} applies), either \textsc{tsx} does not cover all the critical part, hence it provides no guarantee and should be extended or removed\footnote{This case explains why the critical section alone of \textsc{crew} can not be implemented with \textsc{rtx}: the \textsc{rtx} transaction should contain all optimistic read of the \textsc{crew} transaction, nullifying \textsc{crew} benefits.}.
+
+Also, notice that having \textsc{crew} in an optimistic \textsc{tsx} increases the probability of \textsc{tsx} abort, as there is more cache-lines used.
+
+\section{\textsc{Crew} as fall-back behaviour}
+\label{sec:fallback}
+This section presents cases in which using a \textsc{crew} strategy in the fall-back section is useful.
+
+As the fall-back section of a \textsc{tsx} transaction contains the default behaviour, the programmer as to explicitly define the concurrency model, which can be \textsc{crew}.
+
+One might expect the benefits to be the same than in regular concurrency control. However, the usefulness of having a optimistic concurrency model is lesser, as the optimistic section of the \textsc{tsx} already filters deterministic conflicts. Hence, the benefits are only possible on the limits of \textsc{tsx}, for instance if the \emph{dataSet} does not fit in the cache, causing \textsc{tsx} conservatively fails, although without conflicts.
+Notice that the \textsc{crew} semantics are preserved. Even if writer uniqueness is not explicit, \textsc{tsx} is conservative, that is it will abort in case of conflicts.
+
+\section{Weaker concurrent model}
+\label{sec:relax}
+\textsc{Crew} can also benefit when relaxing semantics, as \textsc{Tsx} conflict detection can not be tuned for weaker requirements.
+
+In \textsc{crew}, conflicts are detected and resolved by the programmer, who can use his knowledge of the program to adapt the concurrency control. 
+
+\vfill
+
+{\color{gray} \noindent Word count: 141 + 175 + 137 + 45 = 498, including footnotes, titles, excluding references}
+\end{document}
