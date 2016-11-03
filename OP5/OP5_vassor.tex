@@ -1,0 +1,108 @@
+\documentclass[twocolumn]{article}
+\usepackage{titling}
+\usepackage{color}
+\usepackage{tikz}
+\usetikzlibrary{shapes}
+\usepackage{subcaption}
+
+\definecolor{gray}{gray}{0.5}
+
+\title{One-pager 5}
+\author{Martin \textsc{Vassor}}
+
+\predate{}
+\postdate{}
+\date{}
+
+\setlength{\droptitle}{-90pt}
+
+\newcommand{\vm}[0]{\textsc{vm}}
+\newcommand{\vmm}[0]{\textsc{vmm}}
+\newcommand{\os}[0]{\textsc{os}}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+The question of comparing \emph{processes} and \emph{virtual machines} can be addressed in two --equivalent-- ways: from the viewpoint of a process (resp. \vmm), what is expected from the \os{} (resp. \vmm)? Or from the viewpoint of the \os{} (resp. \vmm), what should be provided? The approach of this proposal is the latter.
+
+\paragraph{Models}
+As \vmm{}s and \os{}es can be implemented in many ways. To provide a general answer, I consider minimal definitions for both systems: micro-kernel (as in \cite{liedtke_micro-kernel_1995}) and \vmm{} as in \cite{popek_formal_1974}.
+\textsc{Liedtke} claims two requirements for micro-kernels: \emph{independence} and \emph{integrity}. This proposal shows that \vmm{}s ensure the same properties. This equivalence results in equivalent exposed interfaces, hence similar \emph{process} and \emph{virtual machine} foundations.
+
+\section{Independence}
+\label{sec:indep}
+Each arbitrary \emph{subsystem} have to be implementable such that it is not corrupted nor disturbed by another subsystem. In both systems, this is guaranteed by virtual memory and pre-emptive scheduling. 
+
+\paragraph{Virtual memory} In a micro-kernel, virtual memory is aided by hardware (\textsc{tlb} and page-walk) and in the \vmm{} abstraction, this is guaranteed by the usage of \emph{relocation-bounds register}.
+
+
+\paragraph{Pre-emptive scheduling} Both systems have the possibility to preempt and abort subsystem.  An example to achieve that is to share the computing time in timeslices managed by hardware counters.
+
+\section{Integrity} 
+\label{sec:int}
+To cooperate, processes should be able to exchange messages safely. Micro-kernels have to implement a trusted \textsc{ipc}. Integrity is defined as the following: for any two processes $P_1$ and $P_2$, if $P_1$ knows $P_2$, $P_1$ should be able to create a channel to $P_2$ which is neither corrupted nor eavesdropped. 
+
+In \vmm{}s, \vm{}s are isolated and the only knowledge they have of other \vm{}s is via the network card (if any). All communication is done via the network, and the \vm{} does not distinguish an other \vm{} from a real distance machine. Integrity is hence ensured depending on the network properties.
+
+\section{Limits \& conclusion}
+\paragraph{Limits:}
+While Sections~\ref{sec:indep} and~\ref{sec:int} provide strong similitudes between \os{}es and \vmm{}s, there are still some differences: 
+\begin{description}
+	\item[Exposed interface] \os{}es provide processes an ideal machine abstraction while \vmm{}s provide a real machine abstraction. 
+	\item[Other kernels] Regular \os{}es provide much more features than micro-kernels such as filesystems, etc. Which have not been studied here. However, \vmm{}s have to provide at least basic equivalents (for instance virtual hard drive), etc.
+\end{description}
+
+\paragraph{Conclusion:}
+\textsc{Os}es and \vmm{}s fundamentally serve the same purpose: providing a machine abstraction to upper layers (see Figure~\ref{fig:os} and~\ref{fig:vmm_as_os}). The difference lies in the usage of the abstraction: \os{}es provide an ideal abstract machine (for programming purposes) and \vmm{}s provide an exact hardware machine abstraction. 
+
+
+\begin{figure}[b]
+	\centering
+	\begin{subfigure}{0.25\textwidth}
+		\centering
+		\begin{tikzpicture}
+			\path [fill=red!20] (0,0) rectangle (4,1) node[pos=.5] {Physical machine};
+			\path [fill=green!20] (0,1) rectangle (2,2) node[pos=.5] {\os};
+			\path [fill=blue!20] (0,3) rectangle (4,2) node[pos=.5] {Process} rectangle (2,1);
+			\draw [red, very thick] (0,2) node[left, text width = .6\textwidth] {Ideal machine interface} -- (2,2);
+		\end{tikzpicture}
+		\caption{\os}
+		\label{fig:os}
+	\end{subfigure}
+	
+	\begin{subfigure}{0.25\textwidth}
+		\centering
+		\begin{tikzpicture}
+			\path [fill=red!20] (0,0) rectangle (4,1) node[pos=.5] {Physical machine};
+			\path [fill=green!20] (0,1) rectangle (2,2) node[pos=.5] {\vmm};
+			\path [fill=yellow!20] (0,3) rectangle (3,2) node[pos=.5] {\os} rectangle (2,1);
+			\path [fill=blue!20] (0,4) rectangle (4,3) node[pos=.5] {Process} rectangle (3,1);
+			\draw [red, very thick] (0,2) node[left, text width = .6\textwidth] {Real machine interface} -- (2,2);
+			\draw [red, very thick] (0,3) node[left, text width = .6\textwidth] {Ideal machine interface} -- (3,3);
+		\end{tikzpicture}
+		\caption{\vmm}
+		\label{fig:vmm}
+	\end{subfigure}
+
+	\begin{subfigure}{0.25\textwidth}
+		\centering
+		\begin{tikzpicture}
+			\path [fill=red!20] (0,0) rectangle (4,1) node[pos=.5] {Physical machine};
+			\path [fill=green!20] (0,1) rectangle (2,2) node[pos=.5] {\vmm};
+			\path [fill=blue!20] (0,3) rectangle (4,2) node[pos=.5] {\os{} $+$ Processes} rectangle (2,1);
+			\draw [red, very thick] (0,2) node[left, text width = .6\textwidth] {Real machine interface} -- (2,2);
+		\end{tikzpicture}
+		\caption{\vmm{} as an \os}
+		\label{fig:vmm_as_os}
+	\end{subfigure}
+	\caption{From the point of view of the \vmm, the \emph{process} and \os{} layers are indistinguishable (\ref{fig:vmm} is view as \ref{fig:vmm_as_os}), resulting in the same pattern than a regular \os.}
+	\label{fig}
+\end{figure}
+
+
+{\color{gray} (word count: 499 including section titles, caption, excluding references)}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+\end{document}
