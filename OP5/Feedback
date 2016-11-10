@@ -1,0 +1,9 @@
+Grade: 6
+
+This is a solid argumentation of "yes-yes".  I hesitated between 5.5 and 6.
+
+I do have a few comments:
+
+ - make the writing lighter .. no heading, just 3-4 paragraphs.  And try to stick to 1 page.
+  - references are good.
+   - you really only "prove" that a process (as defined by Liedke) is a VM.  You don't really show that a VM (as defined by Goldberg) is a process. For that you need to show that the safety, equivalence and isolation properties" of a VM can be met by a process.   You only cover isolation (== independence) and safety (=integrity) but not equivalence.
