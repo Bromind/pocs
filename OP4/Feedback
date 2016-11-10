@@ -1,0 +1,8 @@
+4.5
+
+Your document does not contain the forward references (??). Also in a document this short, there is no need for having multiple sections, or giving forward references at all. Nevertheless, the structure it provides is appreciated. 
+
+Where did you find this definition of a CREW transaction? In the original work, it is basically about a key-value store, where certain key ranges are only modified by one node, but can be read by all. There is no notion of cross-object transactions.
+
+From this, your argument for Claim 1 makes less sense, even though I still agree with the conclusion. Also, depending on the workload, one or the other might be better, or a combination of both. The combination of both is valid, though.
+
