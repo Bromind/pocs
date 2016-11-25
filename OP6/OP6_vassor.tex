@@ -1,0 +1,50 @@
+\documentclass{article}
+\usepackage{titling}
+\usepackage{listings}
+\usepackage[landscape]{geometry}
+\usepackage{color}
+
+\title{One-pager 6}
+\author{Martin \textsc{Vassor}}
+
+\predate{}
+\postdate{}
+\date{}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\pdfminorversion=7
+
+\lstdefinelanguage{rust}
+{
+	morekeywords={[0]trait, fn, ->, where, type},
+	morekeywords={[1]K, S, T, M, Self, i64, bool},
+	otherkeywords={->},
+	comment=[s]{/*}{*/}
+}
+
+\lstset{ %
+	backgroundcolor=\color{white},   % choose the background color
+	basicstyle=\footnotesize,        % size of fonts used for the code
+	breaklines=true,                 % automatic line breaking only at whitespace
+	captionpos=b,                    % sets the caption-position to bottom
+	commentstyle=\color{mygreen},    % comment style
+	escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+	keywordstyle={[0]\color{blue}},       % keyword style
+	keywordstyle={[1]\color{mymauve}},
+}
+
+\begin{document}
+\maketitle
+
+
+{\color{gray} (Character count: 3000, \texttt{tr -d '[:blank:]' < lib.rs | wc -c}.)}
+\begin{center}
+	\rule{4cm}{0.4pt}
+\end{center}
+
+\lstinputlisting[language=rust]{session/src/lib.rs}
+
+\end{document}
