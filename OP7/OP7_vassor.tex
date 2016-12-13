@@ -1,0 +1,61 @@
+\documentclass{article}
+\usepackage{proof}
+\usepackage{titling}
+\usepackage{color}
+
+\definecolor{gray}{gray}{0.5}
+
+\title{One-pager 7}
+\author{Martin \textsc{Vassor}}
+
+\predate{}
+\postdate{}
+\date{}
+
+\setlength{\droptitle}{-90pt}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+\subsection{Objectives}
+The designed device guarantees both secrecy and integrity of sensitive data. During a computation, it ensures correctness of sensitive parts of the computation with respect to the machine code provided (i.e. the provided code is indeed what is executed).
+\paragraph{Threat model:} The \emph{host} system can read an modify all local data.
+\subsection{General design}
+Sensitive programs are stored on the device. During execution, insensitive sections are computed on the \emph{host} system, and sensitive section on the \emph{guest}.
+An untrusted driver is required on the \emph{host} system to receive insensitive data and instructions. The design is conservative: if the driver is compromised, the safety properties still holds. 
+
+\section{Determining sensitive data}
+Sensitive data is statically defined. The programmer statically declares which data is considered sensitive (noted $ss(data)$). Each instruction is either \emph{sensitive-preserving} ($sp(instr)$) or \emph{sensitive-masking} ($sm(instr)$). Intuitively an instruction is sensitive-masking if it hides the sensitive data. It may be the case that (1) the language is high-level (no direct pointer manipulation, etc.); and (2) some insensitive data is considered sensitive.
+
+Inference rules to statically determine which data is sensitive ($sd(data)$) are the following: 
+
+\begin{center}
+	\mbox{
+		\infer[(S.Decl)]{sd(data)}{ss(data)}
+	}
+	\infer[(S.Mask)]{\neg sd(data)}{data = instr(op1, op2) & sm(instr)}
+	\infer[(S.Pres1)]{sd(data) \qquad sd(op2)}{data = instr(op1, op2) & sp(instr) & sd(op1)}
+	\infer[(S.Pres2)]{sd(data) \qquad sd(op1)}{data = instr(op1, op2) & sp(instr) & sd(op2)}
+\end{center}
+
+An operation must be executed on the \emph{guest} device if one of $sd(op1)$, $sd(op2)$ or $sd(res)$ holds. Similarly, sensitive data is stored on the \emph{guest} device.
+
+\section{Bootstrapping, running a program, and I/O}
+The device initiate the execution of any sensitive program. It sends insensitive data and parts of code to the \emph{host} system, and collect the result for sensitive sections. This requires each sensitive program to be either pre-compiled in a trusted environment; or to embed a trusted compiled compiler in the device, which can securely compile programs.
+
+As the \emph{host} system is fully compromised, the \emph{guest} device must have its own I/O peripherals for sensitive I/O operations. However, if the threat model is relaxed, it might use the \emph{host} one's. 
+\section{Argument for guarantees}
+\paragraph{Secrecy}
+Initially, all sensitive data are stored in the \emph{guest} device. During the execution, only insensitive data are sent to the \emph{host} system. Also, dynamically created sensitive data only results from rules $(S.Pres1)$ and $(S.Pres2)$, which one of the operand is sensitive, i.e. it is executed on the \emph{guest} device. Hence all sensitive data is located in the \emph{guest} device during the computation.
+\paragraph{Correctness of computation}
+From rules $(S.Pres1)$ and $(S.Pres2)$, any operation producing sensitive data marks its operand as sensitive, hence is computed in the \emph{guest} device. The property hence hold by induction.
+\paragraph{Integrity}
+Trivial after the two above properties.
+
+\section{Conclusion}
+The proposed device statically determine which data is sensitive and which is not. Based on this distinction, the compiler determines what must be stored or performed on the \emph{guest} device. 
+
+\vfill
+{\color{gray}\noindent Word count: \\\texttt{\$pdftotext OP7\_vassor.pdf - | wc -w\\497}}
+\end{document}
