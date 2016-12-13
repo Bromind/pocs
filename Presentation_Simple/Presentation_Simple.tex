@@ -1,0 +1,67 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+
+
+\mode<presentation>
+\usefonttheme{serif}
+
+\definecolor{lightred}{rgb}{0.8,0.8,1}
+\definecolor{lightgrey}{rgb}{0.8,0.8,0.8}
+
+
+\title{Make it simple}
+\author{Martin \textsc{Vassor}}
+\institute{EPFL}
+\beamertemplatenavigationsymbolsempty
+\setbeamertemplate{footline}[frame number]
+
+\date{December 13, 2016}
+\begin{document}
+
+\begin{frame}
+	\titlepage
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introduction}
+	\begin{itemize}
+		\item Keep it minimal
+		\item ``Algorithmically'' simple
+	\end{itemize}
+	Example: Posix Shell and PowerShell
+\end{frame}
+
+\begin{frame}
+	\frametitle{Minimalism}	
+	Aim for minimalism ?
+	\begin{description}
+		\item [Shell grammar: ] 163 lines.
+		\item [Special built-ins: ] 15 (PowerShell: 100+).
+		\item [Added features: ] 14 (last in 1989).
+	\end{description}
+\end{frame}
+
+\begin{frame}
+	\frametitle{``Algorithmically'' simple}
+	Is ``More abstraction layers'' better ?
+	\vfill
+	\begin{center}
+		All is text vs. Object Oriented Paradigm
+	\end{center}
+	but still ``rich features'': 
+	\begin{center}
+		Function, loops, etc..
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Conclusion}
+	Make it simple: 
+	\begin{itemize}
+		\item $\neq$ Make it minimal.
+		\item Avoid reusing code at all price.
+		\item Avoid to many abstractions.
+	\end{itemize}
+\end{frame}
+
+\end{document}
